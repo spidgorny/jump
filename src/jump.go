@@ -23,8 +23,9 @@ func main() {
 
 	err = filepath.Walk(cwd, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
-			fmt.Println('-', path)
+			// fmt.Println('-', path, info.Name(), search)
 			if info.Name() == search {
+				fmt.Println(path)
 				os.Chdir(path)
 				os.Exit(0)
 			}
