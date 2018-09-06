@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"github.com/karrick/godirwalk"
 )
 
 func contains(s []string, e string) bool {
@@ -36,23 +37,26 @@ func badName(path string) bool {
 }
 
 func walk(cwd string, search string, checkLater []string) {
-	err := filepath.Walk(cwd, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			fmt.Print("\r- ", path)
-			if info.Name() == search {
-				if badName(path) {
-					checkLater = append(checkLater, path)
-					return filepath.SkipDir
-				} else {
-					elapsed := time.Since(start)
-					fmt.Printf("\nFound [%s] in %s", path, elapsed)
-					fmt.Println(path)
-					os.Chdir(path)
-					os.Exit(0)
+	err := godirwalk.Walk(cwd, &godirwalk.Options{
+		Callback: func(path string, info *godirwalk.Dirent) error {
+			if info.IsDir() {
+				fmt.Print("\r- ", path)
+				if info.Name() == search {
+					if badName(path) {
+						checkLater = append(checkLater, path)
+						return filepath.SkipDir
+					} else {
+						elapsed := time.Since(start)
+						fmt.Printf("\nFound [%s] in %s\n", path, elapsed)
+						fmt.Println(path)
+						os.Chdir(path)
+						os.Exit(0)
+					}
 				}
 			}
-		}
-		return nil
+			return nil
+		},
+		Unsorted: true,
 	})
 
 	if err != nil {
