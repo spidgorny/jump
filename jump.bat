@@ -1,7 +1,6 @@
 @echo off
-set asd=test
-echo %asd%
-FOR /F "delims=" %%I IN ('go run src\jump.go %1') DO SET V=%%I
-rem go run src\jump.go %1
-echo %V%
+REM FOR /F "delims=" %%I IN ('go run src\jump.go %1') DO SET V=%%I
+FOR /F "delims=" %%I IN ('%~dp0jump-walker %1') DO SET V=%%I
+echo chdir %V%
 chdir %V%
+dir

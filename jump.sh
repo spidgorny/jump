@@ -3,10 +3,12 @@
 # this script should not be run directly,
 # instead you need to source it from your .bashrc,
 # by adding this line:
-#   . ~/bin/myprog.sh
+#   . ~/jump/jump.sh
 #
 
 function jump() {
-  output=$(go run src/jump.go $1)
+  # output=$(go run src/jump.go $1)
+  output=$(bin/jump $1)
   cd $output
+  ls -l
 }
