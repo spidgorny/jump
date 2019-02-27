@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"github.com/karrick/godirwalk"
+	"github.com/go-errors/errors"
 )
 
 func contains(s []string, e string) bool {
@@ -36,11 +37,11 @@ func badName(path string) bool {
 	return path[0] == '.' || contains(postpone, ends)
 }
 
-func walk(cwd string, search string, checkLater []string) {
+func walk(cwd string, search string, checkLater []string) error {
 	err := godirwalk.Walk(cwd, &godirwalk.Options{
 		Callback: func(path string, info *godirwalk.Dirent) error {
 			if info.IsDir() {
-				fmt.Print("\r- ", path)
+				fmt.Println("- ", path)
 				if info.Name() == search {
 					if badName(path) {
 						checkLater = append(checkLater, path)
@@ -56,12 +57,44 @@ func walk(cwd string, search string, checkLater []string) {
 			}
 			return nil
 		},
+		ErrorCallback: func(osPathname string, err error) godirwalk.ErrorAction {
+			// Your program may want to log the error somehow.
+			// fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+
+			// For the purposes of this example, a simple SkipNode will suffice,
+			// although in reality perhaps additional logic might be called for.
+			return godirwalk.SkipNode
+		},
 		Unsorted: true,
 	})
 
 	if err != nil {
-		panic("Walking file system failed")
+		//panic("Walking file system failed")
+		//fmt.Println("Unable to check", cwd)
+		return errors.Errorf("Unable to check "+cwd)
 	}
+	return err
+}
+
+func reverse(s []string) []string {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+      s[i], s[j] = s[j], s[i]
+  }
+	return s
+}
+
+func checkByWalking(path string, search string, checkLater []string) error {
+	fmt.Println("Checking", path)
+	// store bad paths here which will be checked later
+	err := walk(path, search, checkLater)
+	fmt.Println("\ncheckLater:", len(checkLater))
+
+	fmt.Println("[", search, "] is not found. Searching hidden folders...")
+	for _, path := range checkLater {
+		fmt.Println("Searching in", path)
+		err = walk(path, search, checkLater)
+	}
+	return err
 }
 
 var start time.Time
@@ -83,14 +116,22 @@ func main() {
 		panic("Unable to get cwd")
 	}
 
-	// store bad paths here which will be checked later
-	var checkLater []string
-	walk(cwd, search, checkLater)
+	var rootPath = strings.Split(cwd, "/")
+	fmt.Println(rootPath)
+	var rootPathList []string
+	for i, _ := range rootPath {
+		var path = rootPath[0:i]
+		rootPathList = append(rootPathList, strings.Join(path, "/"))
+	}
+	rootPathList = reverse(rootPathList)
+	fmt.Println("rootPathList", rootPathList)
 
-	fmt.Println("[", search, "] is not found. Searching hidden folders...")
-	for _, path := range checkLater {
-		fmt.Println("Searching in ", path)
-		walk(path, search, checkLater)
+	var checkLater []string
+	for _, path := range rootPathList {
+		err = checkByWalking(path, search, checkLater)
+		if err != nil {
+    	fmt.Println(err.(*errors.Error).ErrorStack())
+		}
 	}
 
 	fmt.Println(`Not found, sorry ¯\_(ツ)_/¯`)
