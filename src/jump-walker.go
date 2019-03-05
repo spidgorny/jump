@@ -1,13 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/go-errors/errors"
+	"github.com/karrick/godirwalk"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"github.com/karrick/godirwalk"
-	"github.com/go-errors/errors"
 )
 
 func contains(s []string, e string) bool {
@@ -17,6 +18,16 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+var verbose = false
+
+func PrintOverwrite(path string) {
+	if verbose {
+		fmt.Println("- ", path)
+	} else {
+		fmt.Print("- ", path, "\r")
+	}
 }
 
 // this may need extending
@@ -33,6 +44,7 @@ func badName(path string) bool {
 		"tmp",
 		"temp",
 	}
+	path = strings.Replace(path, "\\", "/", -1)
 	ends := strings.Split(path, "/")[0]
 	return path[0] == '.' || contains(postpone, ends)
 }
@@ -41,7 +53,7 @@ func walk(cwd string, search string, checkLater []string) error {
 	err := godirwalk.Walk(cwd, &godirwalk.Options{
 		Callback: func(path string, info *godirwalk.Dirent) error {
 			if info.IsDir() {
-				fmt.Println("- ", path)
+				PrintOverwrite(path)
 				if info.Name() == search {
 					if badName(path) {
 						checkLater = append(checkLater, path)
@@ -71,15 +83,15 @@ func walk(cwd string, search string, checkLater []string) error {
 	if err != nil {
 		//panic("Walking file system failed")
 		//fmt.Println("Unable to check", cwd)
-		return errors.Errorf("Unable to check "+cwd)
+		return errors.Errorf("Unable to check " + cwd)
 	}
 	return err
 }
 
 func reverse(s []string) []string {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-      s[i], s[j] = s[j], s[i]
-  }
+		s[i], s[j] = s[j], s[i]
+	}
 	return s
 }
 
@@ -116,6 +128,9 @@ func main() {
 		panic("Unable to get cwd")
 	}
 
+	verbose = *flag.Bool("v", false, "verbose")
+
+	cwd = strings.Replace(cwd, "\\", "/", -1)
 	var rootPath = strings.Split(cwd, "/")
 	fmt.Println(rootPath)
 	var rootPathList []string
@@ -130,7 +145,7 @@ func main() {
 	for _, path := range rootPathList {
 		err = checkByWalking(path, search, checkLater)
 		if err != nil {
-    	fmt.Println(err.(*errors.Error).ErrorStack())
+			fmt.Println(err.(*errors.Error).ErrorStack())
 		}
 	}
 
