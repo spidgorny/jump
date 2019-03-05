@@ -84,3 +84,11 @@ Change it accordingly to the folder where `jump` is installed.
 
 Written in `go` to be fast. Tested on Windows, Linux and MacOS.
 Bug reports and PR are welcome.
+
+## Future plans
+
+Jumping to a folder may take 5 seconds or more depending on the the distance to the destination from CWD.
+Maybe we should cache the folder structure collected by the first execution of the `jump` 
+and save it in JSON file somewhere to be reused on the next `jump` commands?
+
+Adding this to a Linux repository will allow for an easy installation by everybody without installing golang compiler.
