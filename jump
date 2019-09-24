@@ -8,7 +8,7 @@
 
 function jump() {
   # output=$(go run src/jump.go $1)
-  output=$(bin/jump $1)
+  output=$(jump-walker $1)
   cd $output
   ls -l
 }

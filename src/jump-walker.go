@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"github.com/k0kubun/go-ansi"
+	terminal "github.com/wayneashleyberry/terminal-dimensions"
 )
 
 func contains(s []string, e string) bool {
@@ -21,12 +23,20 @@ func contains(s []string, e string) bool {
 }
 
 var verbose = false
+var terminalWidth = uint(80)
 
 func PrintOverwrite(path string) {
 	if verbose {
 		fmt.Println("- ", path)
 	} else {
-		fmt.Print("- ", path, "\r")
+		ansi.EraseInLine(2)
+		ansi.CursorHorizontalAbsolute(0)
+		len := uint(len(path))
+		if (len > terminalWidth-2) {
+			len = terminalWidth-2
+		}
+		sPath := path[0:len]
+		fmt.Print("- ", sPath)
 	}
 }
 
@@ -119,7 +129,7 @@ func main() {
 	}
 	var search = os.Args[1]
 	if search == "" {
-		panic("Usage: > jump some-folder")
+		panic("Usage: > jump [-v (verbose)] some-folder")
 	}
 	fmt.Printf("Searching %s...\n", search)
 
@@ -129,10 +139,13 @@ func main() {
 	}
 
 	verbose = *flag.Bool("v", false, "verbose")
+	fmt.Println("Verbose: ", verbose)
+
+	terminalWidth, _ = terminal.Width()
 
 	cwd = strings.Replace(cwd, "\\", "/", -1)
 	var rootPath = strings.Split(cwd, "/")
-	fmt.Println(rootPath)
+	fmt.Println("Root Path: ", rootPath)
 	var rootPathList []string
 	for i, _ := range rootPath {
 		var path = rootPath[0:i]
